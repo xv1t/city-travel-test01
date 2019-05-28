@@ -7,7 +7,7 @@
 | DME       | KUF     | Москва    | Самара  | Домодедово   | Курумоч    |
 | СМШ       | MOW     | Самара    | Москва  | Курумоч      | Внуково    |
 
-## 1. Решение
+## Решение
 Виртуальный `view` для линейного объедения всех объектов.
 [config/schema/airobjects.sql](config/schema/airobjects.sql)
 
@@ -85,7 +85,7 @@ from
     
 ```
 
-Итоговая  `view`
+### Итоговая  `view`
 
 | id | type    | name           | code | lang | city_name    | airport_name   |
 |----|---------|----------------|------|------|--------------|----------------|
@@ -138,3 +138,48 @@ from
 		on to_objects.code = route.`to`
         AND to_objects.type = route.to_type 
 ```
+### Формирование данных 
+в методе контроллера
+[Controller/RouteController.php:184](https://github.com/xv1t/city-travel-test01/blob/master/src/Controller/RouteController.php#L184)
+```php
+    public function task1()
+    {
+        $route = $this->Route->newEntity();
+        $sql = \file_get_contents(APP . '../config/schema/select1.sql');
+        $data = ConnectionManager::get('default')
+            ->query($sql)
+            ->fetchAll();
+        $this->set(compact('data', 'route', 'data2'));
+       
+    }
+```
+
+### Генерация страницы
+[Template/Route/task1.ctp](src/Template/Route/task1.ctp)
+# 2. создать HTML форму для записи данных в таблицу route
+Файл шаблона создания формы [Template/Route/add2.ctp](src/Template/Route/add2.ctp)
+
+Шаблон содержит [срипт JS](https://github.com/xv1t/city-travel-test01/blob/master/src/Template/Route/add2.ctp#L34) c комментариями
+
+Обработка запроса autocomplete AJAX на стороне сервера [Controller/RouteController.php:152](https://github.com/xv1t/city-travel-test01/blob/master/src/Controller/RouteController.php#L152)
+
+Обработка вставки новой записи в `route`
+[Controller/RouteController.php:59](https://github.com/xv1t/city-travel-test01/blob/master/src/Controller/RouteController.php#L59)
+
+# 3. Как можно оптимизировать каждую из таблиц, для повышения производительности? 
+> Просто описать
+1. Все поля с `code_*` сделать фиксированную длину поля `CHAR(3)`
+2. Ввести таблицу `types` для ссылки на тип через ключ `type_id`, а не через слова `airport|city`
+3. В таблицу `airport` вместо буквенных кодов связи с `city` добавить ключ типа `city_id` и проиндексировать его.
+4. Вести в одной таблице сразу и аэропорты и города, например, `airobjects`  и с ключем `id`. И в таблицу `route` поля сделать такие: 
+```sql
+CREATE TABLE `route` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `from_id` varchar(45) NOT NULL,
+  `to_id` varchar(45) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+```
+5. И при выборке из `route` делать `join`  с таблицей `airport` а уже из неё вытаскивать тип
+
+
