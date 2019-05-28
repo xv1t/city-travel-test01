@@ -153,7 +153,7 @@ class RouteController extends AppController
     {
         $data = [];
         if ($this->request->is('ajax')) {
-            $term = $this->request->query('term');
+            $term = $this->request->getQuery('term');
             $this->loadModel('Airobjects');
             $data = $this->Airobjects
                 ->find('all')
