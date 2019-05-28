@@ -97,6 +97,7 @@ function autocomplete(el) {
                 type: 'POST',
                 url: '/route/add',
                 data: $('#form1').serializeArray(),
+                dataType: 'json',
                 error(res) {
                     /** Вывод в консоль ошибки сервера при обрадотке запроса */
                     console.error({res})

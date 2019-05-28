@@ -49,14 +49,5 @@
 
 echo $this->element('../Route/add2');
 ?>
-<hr>
-<h3>Запрос для получения таблицы</h3>
-<?php
-require 'vendor/jdorn/sql-formatter/lib/SqlFormatter.php';
-echo SqlFormatter::format(file_get_contents(APP . '../config/schema/select1.sql'));
-?>
-<h3>Запрос для выборки всех объектов</h3>
-<?php 
-echo SqlFormatter::format(file_get_contents(APP . '../config/schema/airobjects.sql'));
-?>
+
     </div>

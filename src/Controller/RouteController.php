@@ -14,6 +14,13 @@ use Cake\Datasource\ConnectionManager;
  */
 class RouteController extends AppController
 {
+
+    public function initialize()
+    {
+        parent::initialize();
+        $this->loadComponent('RequestHandler');
+    }
+
     /**
      * Index method
      *
@@ -56,40 +63,37 @@ class RouteController extends AppController
     public function add()
     {
         $route = $this->Route->newEntity();
-        if ($this->request->is('post') && $this->request->is('ajax')) {
-            $this->response->type('json');
 
+        if ($this->request->is('post', 'ajax')) {
             $data = [
-                'status' => 'error',
-                'message' => 'Unknown error',
-                'request' => $this->request->getData()
-            ];
-
+                        'status' => 'error',
+                        'date' => date('c'),
+                        'message' => 'Unknown error',
+                    ];
+            $this->set('_serialize', 'data');
+            
             if (!$this->checkAirObject($this->request->data('from'))) {
                 $data['message'] = 'Введенный код [from] не корректный';
-                $this->response->body(json_encode($data));
-                return $this->response;
-            }
-
-            if (!$this->checkAirObject($this->request->data('to'))) {
+            } else if (!$this->checkAirObject($this->request->data('to'))) {
                 $data['message'] = 'Введенный код [to] не корректный';
-                $this->response->body(json_encode($data));
-                return $this->response;
+            } else {
+                $route = $this->Route->patchEntity(
+                    $route, 
+                    $this->request->getData()
+                );
+            
+                if ($this->Route->save($route)) {
+                    $data['status'] = 'success';
+                    $data['Message'] = 'Record added';
+                }                
             }
 
-            $route = $this->Route->patchEntity($route, $this->request->getData());
-            
-            if ($this->Route->save($route)) {
-                $data['status'] = 'success';
-                $this->response->body(json_encode($data));
-                return $this->response;
-            }
-            $this->response->body(json_encode($data));
-            return $this->response;
-            
+            $this->set(compact('data'));
+            return ;            
         }
-
-        if ($this->request->is('post')) {
+        
+        if ($this->request->is('post') && !$this->request->is('ajax')) {
+            
             $route = $this->Route->patchEntity($route, $this->request->getData());
             if ($this->Route->save($route)) {
                 $this->Flash->success(__('The route has been saved.'));
@@ -157,7 +161,8 @@ class RouteController extends AppController
             $this->loadModel('Airobjects');
             $data = $this->Airobjects
                 ->find('all')
-                ->where([
+                ->where(
+                    [
                     'OR' => [                        
                         "code LIKE" => $term . '%', 
                         "city_name LIKE" => $term . '%', 
@@ -166,15 +171,15 @@ class RouteController extends AppController
                     'AND' => [
                         "code <> \"\"" 
                     ]
-                ]
+                    ]
                 )
                 ->limit(10)
                 ->order('code')
                 ->toArray();  
         }
-        $this->response->type('json');
-        $this->response->body(json_encode($data));
-        return $this->response;
+
+        $this->set(compact('data'));
+        $this->set('_serialize', 'data');
     }
 
     /**
